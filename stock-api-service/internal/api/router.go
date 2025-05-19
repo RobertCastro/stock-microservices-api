@@ -9,6 +9,7 @@ import (
 	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/api/middlewares"
 	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/client"
 	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/health"
+	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,10 +20,10 @@ type Router struct {
 }
 
 // NewRouter crea una nueva instancia del router.
-func NewRouter(client *client.ExternalAPIClient) *Router {
+func NewRouter(client *client.ExternalAPIClient, repo *repository.StockRepository) *Router {
 	return &Router{
-		syncHandler:   handlers.NewSyncHandler(client),
-		healthHandler: health.NewHealthHandler(),
+		syncHandler:   handlers.NewSyncHandler(client, repo),
+		healthHandler: health.NewHealthHandler(repo),
 	}
 }
 
@@ -47,7 +48,7 @@ func (r *Router) SetupRoutes(router *gin.Engine) {
 // SetupServer configura y devuelve un servidor HTTP listo para usar.
 func (r *Router) SetupServer(port string) *http.Server {
 	if port == "" {
-		port = "8080"
+		port = "8000"
 	}
 
 	// Crear router Gin

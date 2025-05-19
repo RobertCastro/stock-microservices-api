@@ -2,10 +2,12 @@
 package health
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,11 +21,15 @@ type HealthStatus struct {
 }
 
 // HealthHandler maneja las verificaciones de salud del servicio.
-type HealthHandler struct{}
+type HealthHandler struct {
+	repo *repository.StockRepository
+}
 
 // NewHealthHandler crea una nueva instancia de HealthHandler.
-func NewHealthHandler() *HealthHandler {
-	return &HealthHandler{}
+func NewHealthHandler(repo *repository.StockRepository) *HealthHandler {
+	return &HealthHandler{
+		repo: repo,
+	}
 }
 
 // BasicHealth verifica el estado básico del servicio.
@@ -33,11 +39,22 @@ func (h *HealthHandler) BasicHealth(c *gin.Context) {
 
 // DetailedHealth verifica el estado detallado del servicio.
 func (h *HealthHandler) DetailedHealth(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+
 	status := HealthStatus{
 		Status:     "ok",
 		Components: make(map[string]string),
 		Timestamp:  time.Now(),
 		Version:    "1.0.0",
+	}
+
+	// Verificar conexión a la base de datos
+	if err := h.repo.Ping(ctx); err != nil {
+		status.Status = "degradado"
+		status.Components["database"] = "error: " + err.Error()
+	} else {
+		status.Components["database"] = "ok"
 	}
 
 	// Verificar configuración de API
