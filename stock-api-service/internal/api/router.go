@@ -30,6 +30,7 @@ func NewRouter(client *client.ExternalAPIClient) *Router {
 func (r *Router) SetupRoutes(router *gin.Engine) {
 	// Middleware para todas las rutas
 	router.Use(middlewares.Logger())
+	router.Use(middlewares.CORS())
 
 	// Rutas para la API
 	api := router.Group("/api/v1")
