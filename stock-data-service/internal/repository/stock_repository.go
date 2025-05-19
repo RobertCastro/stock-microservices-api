@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/models"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/models"
 )
 
 // StockRepository maneja las operaciones de base de datos para los stocks.

@@ -1,4 +1,4 @@
-module github.com/RobertCastro/stock-microservices-api/stock-api-service
+module github.com/RobertCastro/stock-microservices-api/stock-data-service
 
 go 1.23.3
 

@@ -31,7 +31,7 @@ El servicio requiere las siguientes variables de entorno:
 ```bash
 # Clonar el repositorio
 git clone https://github.com/RobertCastro/stock-microservices-api.git
-cd stock-microservices-api/stock-api-service
+cd stock-microservices-api/stock-data-service
 
 # Instalar dependencias
 go mod download
