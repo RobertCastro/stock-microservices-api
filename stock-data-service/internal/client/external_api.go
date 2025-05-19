@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/models"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/models"
 )
 
 // APIError representa un error devuelto por la API externa.

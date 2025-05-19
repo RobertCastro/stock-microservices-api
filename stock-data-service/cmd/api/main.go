@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/api"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/client"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/config"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/database"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/repository"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/api"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/client"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/config"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/database"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/repository"
 	"github.com/joho/godotenv"
 )
 

@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/api/handlers"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/api/middlewares"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/client"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/health"
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/repository"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/api/handlers"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/api/middlewares"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/client"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/health"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 

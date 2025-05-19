@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/RobertCastro/stock-microservices-api/stock-api-service/internal/repository"
+	"github.com/RobertCastro/stock-microservices-api/stock-data-service/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
