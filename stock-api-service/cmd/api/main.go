@@ -1,8 +1,10 @@
+// Paquete main es el punto de entrada principal de la aplicación.
 package main
 
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -23,6 +25,10 @@ func main() {
 	// Inicializar configuración
 	cfg := config.NewConfig()
 
+	// Imprimir la configuración de la API (solo para debugging)
+	log.Printf("API Base URL configurada: %s", cfg.StockAPIBaseURL)
+	log.Printf("API Auth Token configurado: %s", maskToken(cfg.StockAPIToken))
+
 	// Crear cliente de API externa
 	externalClient := client.NewExternalAPIClient(cfg.StockAPIBaseURL, cfg.StockAPIToken)
 
@@ -33,8 +39,8 @@ func main() {
 	// Arrancar servidor en una goroutine
 	go func() {
 		log.Printf("Servidor iniciado en el puerto %s", cfg.ServerPort)
-		if err := server.ListenAndServe(); err != nil {
-			log.Printf("Error al iniciar el servidor: %v", err)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Error al iniciar el servidor: %v", err)
 		}
 	}()
 
@@ -42,6 +48,7 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+	log.Println("Apagando servidor...")
 
 	// Cerrar con timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -50,4 +57,14 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Error al cerrar el servidor: %v", err)
 	}
+
+	log.Println("Servidor apagado")
+}
+
+// Ocultar parte del token cuando se imprime en los logs
+func maskToken(token string) string {
+	if len(token) <= 8 {
+		return "***"
+	}
+	return token[:4] + "..." + token[len(token)-4:]
 }
