@@ -1,0 +1,54 @@
+# Archivos binarios de compilación
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Archivos de compilación generales
+*.out
+*.a
+*.o
+
+# Archivos generados por go build / go install
+/bin/
+/pkg/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de dependencias
+vendor/
+
+# Archivos de configuración de IDEs/editors
+.vscode/
+.idea/
+*.swp
+
+
+# Logs
+*.log
+
+# Cobertura de pruebas
+*.coverprofile
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de test cache
+*.test
+
+# Deployment
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate.*
+*.tfplan
+*tfplan
+*.tfstate.*
+terraform.tfvars
+.terraform/
+.terraform.lock.hcl
+infra.sh
+.env
