@@ -1,0 +1,25 @@
+# Archivos de Git
+.git
+.gitignore
+
+# Documentación
+README.md
+docs/
+
+# Archivos de Docker
+Dockerfile
+.dockerignore
+
+# Archivos de prueba
+*_test.go
+
+# Binarios
+/api
+
+# Temporales y logs
+/tmp
+*.log
+
+# Archivos de configuración locales
+.env
+.env.*
