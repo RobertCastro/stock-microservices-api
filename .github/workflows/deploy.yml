@@ -1,0 +1,143 @@
+name: Deploy Microservices to GKE
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feat/**'
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  CLUSTER_NAME: stock-insights-cluster
+  REGISTRY: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/docker-images
+  DB_NAME: stockdb
+
+jobs:
+  build-and-deploy:
+    name: 'Build and Deploy'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Google Auth
+      id: auth
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+        
+    # Configuración común
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+        
+    - name: Install GKE Auth Plugin
+      run: |
+        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+        sudo apt-get update
+        sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+        
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker us-central1-docker.pkg.dev
+      
+    # Construir y desplegar stock-data-service
+    - name: Build Stock Data Service
+      working-directory: ./stock-data-service
+      run: |
+        docker build -t $REGISTRY/stock-data-service:${{ github.sha }} .
+        docker tag $REGISTRY/stock-data-service:${{ github.sha }} $REGISTRY/stock-data-service:latest
+        
+    - name: Push Stock Data Service Image
+      run: |
+        docker push $REGISTRY/stock-data-service:${{ github.sha }}
+        docker push $REGISTRY/stock-data-service:latest
+        
+    # Construir y desplegar stock-api-service
+    - name: Build Stock API Service
+      working-directory: ./stock-api-service
+      run: |
+        docker build -t $REGISTRY/stock-api-service:${{ github.sha }} .
+        docker tag $REGISTRY/stock-api-service:${{ github.sha }} $REGISTRY/stock-api-service:latest
+        
+    - name: Push Stock API Service Image
+      run: |
+        docker push $REGISTRY/stock-api-service:${{ github.sha }}
+        docker push $REGISTRY/stock-api-service:latest
+      
+    # Desplegar en GKE
+    - name: Deploy to GKE
+      run: |
+        export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+        gcloud container clusters get-credentials $CLUSTER_NAME --region $REGION --project $PROJECT_ID
+        
+        # Actualizar las imágenes en los archivos de deployment
+        sed -i "s|IMAGE_TO_REPLACE|$REGISTRY/stock-data-service:${{ github.sha }}|g" kubernetes/stock-data-service/deployment.yaml
+        sed -i "s|IMAGE_TO_REPLACE|$REGISTRY/stock-api-service:${{ github.sha }}|g" kubernetes/stock-api-service/deployment.yaml
+        
+        # Crear configmaps y secrets
+        cat > kubernetes/shared/backend-config.yaml << EOF
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: db-credentials
+        type: Opaque
+        stringData:
+          username: root
+          password: ""
+          dbname: $DB_NAME
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: api-config
+        data:
+          DB_SSL_MODE: "disable"
+          STOCK_API_BASE_URL: "${{ secrets.STOCK_API_BASE_URL }}"
+          STOCK_API_AUTH_TOKEN: "${{ secrets.STOCK_API_AUTH_TOKEN }}"
+        EOF
+        
+        # Aplicar configuraciones compartidas
+        echo "Applying shared configurations..."
+        kubectl apply -f kubernetes/shared/backend-config.yaml --validate=false
+        
+        # Verificar si CockroachDB ya está desplegado
+        if ! kubectl get deployment cockroachdb &> /dev/null; then
+          echo "Deploying CockroachDB..."
+          kubectl apply -f kubernetes/shared/cockroachdb.yaml --validate=false
+          
+          # Esperar a que CockroachDB esté listo
+          echo "Waiting for CockroachDB to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment/cockroachdb
+          
+          # Inicializar la base de datos
+          echo "Initializing CockroachDB..."
+          sleep 10
+          kubectl exec deployment/cockroachdb -- /cockroach/cockroach sql --insecure --user=root -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;"
+        else
+          echo "CockroachDB already deployed"
+        fi
+        
+        # Desplegar microservicios
+        echo "Deploying Stock Data Service..."
+        kubectl apply -f kubernetes/stock-data-service/deployment.yaml --validate=false
+        kubectl apply -f kubernetes/stock-data-service/service.yaml --validate=false
+        kubectl apply -f kubernetes/stock-data-service/config.yaml --validate=false
+        
+        echo "Deploying Stock API Service..."
+        kubectl apply -f kubernetes/stock-api-service/deployment.yaml --validate=false
+        kubectl apply -f kubernetes/stock-api-service/service.yaml --validate=false
+        kubectl apply -f kubernetes/stock-api-service/config.yaml --validate=false
+        
+        # Aplicar certificado e ingress
+        echo "Setting up certificate and ingress..."
+        kubectl apply -f kubernetes/shared/certificate.yaml --validate=false
+        kubectl apply -f kubernetes/shared/ingress.yaml --validate=false
+        
+        # Verificar el estado del despliegue
+        echo "Checking deployment status..."
+        kubectl get deployments
+        kubectl get services
+        kubectl get ingress
