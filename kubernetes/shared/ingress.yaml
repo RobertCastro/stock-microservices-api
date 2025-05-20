@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stock-insights-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: "api-soyrobert-cert"
+    networking.gke.io/v1beta1.FrontendConfig: "ssl-redirect"
+spec:
+  rules:
+  - host: api.soyrobert.co
+    http:
+      paths:
+      - path: /api/v1/sync
+        pathType: Exact
+        backend:
+          service:
+            name: stock-data-service
+            port:
+              number: 80
+      - path: /api/v1/stocks
+        pathType: Prefix
+        backend:
+          service:
+            name: stock-api-service
+            port:
+              number: 80
+      - path: /api/v1/recommendations
+        pathType: Exact
+        backend:
+          service:
+            name: stock-api-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stock-api-service
+            port:
+              number: 80
+---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: ssl-redirect
+spec:
+  redirectToHttps:
+    enabled: true

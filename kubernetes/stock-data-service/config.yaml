@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stock-data-service-config
+data:
+  # Configuración del servicio
+  SERVER_PORT: "8080"
+  
+  # Configuración específica para obtener datos de la API externa
+  SYNC_INTERVAL_MINUTES: "60"
+  RETRY_ATTEMPTS: "3"
+  RETRY_DELAY_SECONDS: "5"
+  BATCH_SIZE: "100"
+  
+  # Configuración de registro/logging
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
